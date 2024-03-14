@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Watchlist.Models;
 
 namespace Watchlist.Data
 {
@@ -24,5 +25,8 @@ namespace Watchlist.Data
             modelBuilder.Entity<FilmUtilisateur>()
             .HasKey(t => new { t.IdUtilisateur, t.IdFilm }); 
         }
+        // Surcharge de la méthode OnModelCreating pour migrer
+        // objet avec relation many-to-many (association).
+        public DbSet<Watchlist.Models.ModeleVueFilm>? ModeleVueFilm { get; set; }
     }
 }

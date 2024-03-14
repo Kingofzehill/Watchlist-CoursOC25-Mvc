@@ -8,6 +8,7 @@ namespace Watchlist.Models
         // BUG002 : specifies key identifier (IdFilm).
         // Resolve the bug which prevent to create a
         // Razor View of this model in Listefilms dir.
+        // https://learn.microsoft.com/en-us/aspnet/mvc/overview/getting-started/getting-started-with-ef-using-mvc/creating-a-more-complex-data-model-for-an-asp-net-mvc-application
         [System.ComponentModel.DataAnnotations.Key]
         public int IdFilm { get; set; }
         public string Titre { get; set; }
