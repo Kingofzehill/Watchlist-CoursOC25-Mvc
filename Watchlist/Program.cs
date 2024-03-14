@@ -72,21 +72,29 @@ namespace Watchlist
                 builder.Services.AddControllersWithViews();
             */
 
-            //V3 code from SMoureu below
-            //  ===> we add missing original instructions from automatically
+            //V3 code from SMoureu below (fix also bug001 and bug003)
+            //  ===> add to fixed code missing original instructions from automatically
             //  generated code in VS2022 to fixed OCR code
-            builder.Services.AddIdentity<Utilisateur, IdentityRole>(options =>
+            /*** Original Automaticaly generated code by Visual Studio 2022
+    builder.Services.AddDefaultIdentity<IdentityUser>
+        (options => options.SignIn.RequireConfirmedAccount = true)
+        .AddEntityFrameworkStores<ApplicationDbContext>();
+    builder.Services.AddControllersWithViews();
+***/
+            builder.Services.AddIdentity<Utilisateur, IdentityRole>
+            (options =>
             {
+                options.SignIn.RequireConfirmedAccount = true;//added from original VS2002 code
                 options.User.RequireUniqueEmail = false;
             })
              //SMO: non reconnu (UIFramework.Bootstrap4) dans le contexte 
+             //     contournement possible utiliser Bootstrap5
              //.AddDefaultUI(UIFramework.Bootstrap4) 
-             // contournement possible utiliser Bootstrap5
              .AddEntityFrameworkStores<ApplicationDbContext>()
              .AddDefaultTokenProviders();
             builder.Services.AddControllersWithViews();
+
             var app = builder.Build();
-            
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -107,14 +115,19 @@ namespace Watchlist
 
             app.UseAuthentication();
             //BUG003 :
-            //System.InvalidOperationException : 'Unable to find the required services.
-            //Please add all the required services by calling 'IServiceCollection.AddAuthorization'
-            //in the application startup code.'
+            //      System.InvalidOperationException : 'Unable to find the required services.
+            //      Please add all the required services by calling 'IServiceCollection.AddAuthorization'
+            //      in the application startup code.'
             app.UseAuthorization();
 
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            //BUG004 :
+            //      System.InvalidOperationException : 'Unable to find the required services.
+            //      Please add all the required services by calling 'IServiceCollection.AddRazorPages'
+            //      inside the call to 'ConfigureServices(...)' in the application startup code.'
             app.MapRazorPages();
 
             app.Run();
