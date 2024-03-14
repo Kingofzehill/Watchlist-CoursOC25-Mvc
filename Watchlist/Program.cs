@@ -109,10 +109,18 @@ namespace Watchlist
             ***/
 
             builder.Services.AddIdentity<Utilisateur, IdentityRole>
-                (options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-            builder.Services.AddControllersWithViews();
-            builder.Services.AddRazorPages();
+                (options =>
+                {
+                    options.SignIn.RequireConfirmedAccount = true;
+                    options.User.RequireUniqueEmail = false; //Optimization of auto generated code with this OCR instruction
+                })
+                .AddEntityFrameworkStores<ApplicationDbContext>() //Bug001 fix
+                .AddDefaultTokenProviders(); //Optimization of auto generated code with this OCR instruction
+            //SMO: non reconnu (UIFramework.Bootstrap4) dans le contexte 
+            //     contournement possible utiliser Bootstrap5
+            //.AddDefaultUI(UIFramework.Bootstrap4) 
+            builder.Services.AddControllersWithViews(); //BUG003 fix
+            builder.Services.AddRazorPages(); //BUG004 fix
 
             var app = builder.Build();
 
