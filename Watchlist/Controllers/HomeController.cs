@@ -15,6 +15,12 @@ namespace Watchlist.Controllers
 
         public IActionResult Index()
         {
+            //return View();
+            //UPD007 : add redirection to my movie list if user authenticated
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "ListeFilms");
+            }
             return View();
         }
 
