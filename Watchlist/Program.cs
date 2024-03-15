@@ -18,15 +18,7 @@ namespace Watchlist
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            //BUG001
-            /*** Original Automaticaly generated code by Visual Studio 2022
-                builder.Services.AddDefaultIdentity<IdentityUser>
-                    (options => options.SignIn.RequireConfirmedAccount = true)
-                    .AddEntityFrameworkStores<ApplicationDbContext>();
-                builder.Services.AddControllersWithViews();
-            ***/
-
-            //OCR objective: update code for managing users identity with the
+            //BUG001: OCR objective: update code for managing users identity with the
             //extended Utilisateur class (extended from Microsoft.AspNetCore.Identity.IdentityUser).
             /*
              * ==> Code below from OCR not working and had to be fixed :
@@ -104,10 +96,10 @@ namespace Watchlist
                     Original Automaticaly generated code by Visual Studio 2022
                     builder.Services.AddDefaultIdentity<IdentityUser>
                         (options => options.SignIn.RequireConfirmedAccount = true)
-                        .AddEntityFrameworkStores<ApplicationDbContext>();
-                    builder.Services.AddControllersWithViews();
+                        .AddEntityFrameworkStores<ApplicationDbContext>();                    
             ***/
 
+            /*
             builder.Services.AddIdentity<Utilisateur, IdentityRole>
                 (options =>
                 {
@@ -118,7 +110,21 @@ namespace Watchlist
                 .AddDefaultTokenProviders(); //Optimization of auto generated code with this OCR instruction
             //SMO: non reconnu (UIFramework.Bootstrap4) dans le contexte 
             //     contournement possible utiliser Bootstrap5
-            //.AddDefaultUI(UIFramework.Bootstrap4) 
+            //      .AddDefaultUI(UIFramework.Bootstrap4) */
+
+            //Bug004: V4 code works, app runs, but Login link (and also register) is not working : https://localhost:44352/Identity/Account/Login
+            //      it appears builder.Services.AddIdentity is the cause.
+            //      We have to use AddDefaultIdentity for making the login page works properly.
+            //V5 code ==> 
+            builder.Services.AddDefaultIdentity<Utilisateur>
+                (options =>
+                {
+                    options.SignIn.RequireConfirmedAccount = true;
+                    options.User.RequireUniqueEmail = false; //Optimization of auto generated code with this OCR instruction
+                })
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders(); //Optimization of auto generated code with this OCR instruction
+
             builder.Services.AddControllersWithViews(); //BUG003 fix
             builder.Services.AddRazorPages(); //BUG004 fix
 
