@@ -41,6 +41,10 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.PresentDansListe)
+                @*UPD008: Affiche un bouton + ou - si le film est présent dans sa liste*@
+                <button id="@item.IdFilm" data-val="@item.PresentDansListe" class="btn">
+                    @(item.PresentDansListe ? " - " : " + ")
+                </button>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Vu)
