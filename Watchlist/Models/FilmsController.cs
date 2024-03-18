@@ -57,10 +57,14 @@ namespace Watchlist.Models
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Titre,Annee")] Film film)
         {
+            //NOTE001 : vérification de la validité du formulaire avant création de l'enregristrement
             if (ModelState.IsValid)
             {
+                //Met à jour le DbContexte de l'app
                 _context.Add(film);
+                //Sauvegarde en BDD en asynchrone
                 await _context.SaveChangesAsync();
+                //Renvoi à l'index des films après création
                 return RedirectToAction(nameof(Index));
             }
             return View(film);
