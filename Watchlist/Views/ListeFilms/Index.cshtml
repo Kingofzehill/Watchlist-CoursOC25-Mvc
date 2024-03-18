@@ -61,3 +61,36 @@
 }
     </tbody>
 </table>
+
+@*UPD009: Scripter les boutons en javascript*@
+@section Scripts {
+    <script>
+        jQuery(document).ready(function () {
+            $('.btn').click(function (e) {
+                var btn = $(this);
+                @*Récupère l'id film du bouton*@
+                var idFilm = btn.attr('id');
+                @*Récupère la valeur du champs presentDansListe stocké dans l'attribut data-val*@
+                var valFilm = btn.attr('data-val') == "False" ? 0 : 1;
+                @*Appele la fonction AjouterSupprimer avec en paramètre l'id du film 
+                et la valeur de présent dans la liste (o ou 1)*@
+                $.get('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm,
+                    function (data) {
+                        if (data == 0) {
+                            @*Si presentDansListe = 0 (non ajouté) affiche le +*@
+                            btn.attr('presentDansListe-val', 'False');
+                            btn.html(' + ');
+                        }
+                        else if (data == 1) {
+                            @*Si presentDansListe = 1 ajouté) affiche le -*@
+                            btn.attr('presentDansListe-val', 'True');
+                            btn.html(' - ');
+                        }
+                    });
+            });
+
+        });
+
+    </script>
+
+}
