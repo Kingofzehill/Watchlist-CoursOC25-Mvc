@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Identity;
 using Watchlist.Data;
 using Watchlist.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Watchlist.Controllers
 {
+    //UPD010 : sécruise la classe qui ne peut être utilisé si l'utilisateur n'est pas authentifié
+    [Authorize]
     public class ListeFilmsController : Controller
     {
         //UPD002 contexte de la base de données.
