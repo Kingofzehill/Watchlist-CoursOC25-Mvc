@@ -1,4 +1,111 @@
-﻿@model IEnumerable<Watchlist.Data.Film>
+﻿@model IEnumerable<Watchlist.Models.ModeleVueFilm>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Titre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Annee)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PresentDansListe)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Vu)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Note)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Titre)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Annee)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PresentDansListe)
+                    @*UPD008: Affiche un bouton + ou - si le film est présent dans sa liste*@
+                    <button id="@item.IdFilm" data-val="@item.PresentDansListe" class="btn">
+                        @(item.PresentDansListe ? " - " : " + ")
+                    </button>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Vu)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Note)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.IdFilm">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.IdFilm">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.IdFilm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@*UPD009: javascript, utiliser la valeur des boutons pour interagir avec l'utilsateur*@
+@section Scripts {
+    <script>
+        jQuery(document).ready(function () {
+            $('.btn').click(function (e) {
+                var btn = $(this);
+        @*Récupère l'id film du bouton*@
+                        var idFilm = btn.attr('id');
+        @*Récupère la valeur du champs presentDansListe stocké dans l'attribut data-val
+                et convertit l'expression booléen en 0 (false) et 1 (true)*@
+                        var valFilm = btn.attr('data-val') == "False" ? 0 : 1;
+        @*Appele la fonction AjouterSupprimer du controleur FilmController.cs avec en paramètre l'id du film
+                et la valeur de présent dans la liste (o ou 1)
+                La functgion data récupère la valeur de retour de AjouterSupprimer
+                et coche/décoche présent dans la liste en fonction
+                *@
+                    $.get('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm,
+                        function (data) {
+                            if (data == 0) {
+        @*Si presentDansListe = 0 (non ajouté) affiche le +*@
+                                    //BUG005: le code est faux, l'attribut est data-val et non presentDansListe-Val...
+                                    //btn.attr('presentDansListe-val', 'False');
+                                    btn.attr('data-val', 'False');
+                                btn.html(' + ');
+                            }
+                            else if (data == 1) {
+        @*Si presentDansListe = 1 ajouté) affiche le -*@
+                                    //BUG005: ce code est faux, l'attribut est data-val et non presentDansListe-Val...
+                                    //btn.attr('presentDansListe-val', 'True');
+                                    btn.attr('data-val', 'True');
+                                btn.html(' - ');
+                            }
+                        });
+            });
+
+        });
+
+    </script>
+
+}
+
+@* BUG009: Code de la page généré automatiquement avant modification pour utiliser le modèle 
+@model IEnumerable<Watchlist.Data.Film>
 
 @{
     ViewData["Title"] = "Index";
@@ -39,3 +146,4 @@
 }
     </tbody>
 </table>
+*@
