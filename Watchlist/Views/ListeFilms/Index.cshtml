@@ -70,20 +70,28 @@
                 var btn = $(this);
                 @*Récupère l'id film du bouton*@
                 var idFilm = btn.attr('id');
-                @*Récupère la valeur du champs presentDansListe stocké dans l'attribut data-val*@
+                @*Récupère la valeur du champs presentDansListe stocké dans l'attribut data-val 
+                et convertit l'expression booléen en 0 (false) et 1 (true)*@
                 var valFilm = btn.attr('data-val') == "False" ? 0 : 1;
-                @*Appele la fonction AjouterSupprimer avec en paramètre l'id du film 
-                et la valeur de présent dans la liste (o ou 1)*@
+                @*Appele la fonction AjouterSupprimer du controleur FilmController.cs avec en paramètre l'id du film 
+                et la valeur de présent dans la liste (o ou 1)
+                La functgion data récupère la valeur de retour de AjouterSupprimer 
+                et coche/décoche présent dans la liste en fonction
+                *@
                 $.get('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm,
                     function (data) {
                         if (data == 0) {
                             @*Si presentDansListe = 0 (non ajouté) affiche le +*@
-                            btn.attr('presentDansListe-val', 'False');
+                            //BUG005: le code est faux, l'attribut est data-val et non presentDansListe-Val...
+                            //btn.attr('presentDansListe-val', 'False');
+                            btn.attr('data-val', 'False');
                             btn.html(' + ');
                         }
                         else if (data == 1) {
                             @*Si presentDansListe = 1 ajouté) affiche le -*@
-                            btn.attr('presentDansListe-val', 'True');
+                            //BUG005: ce code est faux, l'attribut est data-val et non presentDansListe-Val...
+                            //btn.attr('presentDansListe-val', 'True');
+                            btn.attr('data-val', 'True');
                             btn.html(' - ');
                         }
                     });
