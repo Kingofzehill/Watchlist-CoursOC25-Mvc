@@ -94,7 +94,7 @@ namespace Watchlist.Models
             //BUG007: valret est la valeur de retour... Grosse erreur de codage ici.
             //On veut vérifier si la case à cocher présentDansListe est false (0) ou true (1)
             //cette valeur est censée être en entrée de la méthode dans un paramètre Val.
-            //Code if (valret == 1) modifié pour if (val == 1)
+            //Le code if (valret == 1) este modifié pour if (val == 1)
             if (val == 1)
             {
                 // s'il existe un enregistrement dans FilmsUtilisateur qui contient à la fois l'identifiant de l'utilisateur
