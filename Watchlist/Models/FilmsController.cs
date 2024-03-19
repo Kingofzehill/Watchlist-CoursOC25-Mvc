@@ -74,6 +74,63 @@ namespace Watchlist.Models
             return View(modele);
         }
 
+        //UPD012: méthode ajouterSupprimer un film de sa liste
+        //BUG006: le code de OCR est incorrect, avec des oublis et une logique de code incohérente.
+        //ajout des paramètres en entrée id (film) et val (sélectionné dans sa liste 0(non) et 1(oui).
+        [HttpGet]
+        public async Task<JsonResult> AjouterSupprimer(int id, int val)
+        {
+            
+            //on initialise la valeur de retour
+            int valret = -1; . 
+                    
+            //on récupère l'utilisateur connecté
+            var idUtilisateur = await RecupererIdUtilisateurCourant();
+
+            //***** il apparait possible que id et val soient null.
+            //Si par exemple l'utilisateur tripote l'url.
+            // le code n'est pas très solide****** on renverrait -1 dans ce cas ?
+
+            //BUG007: valret est la valeur de retour... Grosse erreur de codage ici.
+            //On veut vérifier si la case à cocher présentDansListe est false (0) ou true (1)
+            //cette valeur est censée être en entrée de la méthode dans un paramètre Val.
+            //Code if (valret == 1) modifié pour if (val == 1)
+            if (val == 1)
+            {
+                // s'il existe un enregistrement dans FilmsUtilisateur qui contient à la fois l'identifiant de l'utilisateur
+                // et celui du film, alors le film existe dans la liste de films et peut
+                // être supprimé
+                var film = _context.FilmsUtilisateur.FirstOrDefault(x =>
+                        x.IdFilm == id && x.IdUtilisateur == idUtilisateur);
+                if (film != null)
+                {
+                    _context.FilmsUtilisateur.Remove(film);
+                    valret = 0; //non coché
+                }
+
+            }
+            else
+            {
+                // le film n'est pas dans la liste de films, nous devons donc
+                // créer un nouvel objet FilmUtilisateur et l'ajouter à la base de données.
+                _context.FilmsUtilisateur.Add(
+                   new FilmUtilisateur
+                   {
+                       IdUtilisateur = idUtilisateur,
+                       IdFilm = id,
+                       Vu = false,
+                       Note = 0
+                   }
+                );
+                valret = 1; //coché
+            }
+            // nous pouvons maintenant enregistrer les changements dans la base de données
+            await _context.SaveChangesAsync();
+            // et renvoyer notre valeur de retour (-1, 0 ou 1) au script qui a appelé
+            // cette méthode depuis la page Index
+            return Json(valret);
+        }
+
         // GET: Films/Details/5
         public async Task<IActionResult> Details(int? id)
         {
