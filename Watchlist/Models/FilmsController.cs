@@ -31,6 +31,13 @@ namespace Watchlist.Models
             return utilisateur?.Id;
         }
 
+        //UPD014(BUG010): récupère l'utilisateur connecté
+        public async Task<Utilisateur> RecupererUtilisateurCourant()
+        {
+            Utilisateur utilisateur = await GetCurrentUserAsync();
+            return utilisateur;
+        }
+
         //UPD010: GetCurrentUserAsync appelle la méthode GetUserAsync du userManager contextuel de l'app
         private Task<Utilisateur> GetCurrentUserAsync() =>
         _gestionnaire.GetUserAsync(HttpContext.User);
@@ -95,54 +102,76 @@ namespace Watchlist.Models
 public async Task<JsonResult> AjouterSupprimer(int id, int val)
 {
 
-//on initialise la valeur de retour
-int valret = -1;  
+    //on initialise la valeur de retour
+    int valret = -1;  
 
-//on récupère l'utilisateur connecté
-var idUtilisateur = await RecupererIdUtilisateurCourant();
+    //on récupère l'utilisateur connecté
+    var idUtilisateur = await RecupererIdUtilisateurCourant();
 
-//***** il apparait possible que id et val soient null.
-//Si par exemple l'utilisateur tripote l'url.
-// le code n'est pas très solide****** on renverrait -1 dans ce cas ?
+    //***** il apparait possible que id et val soient null.
+    //Si par exemple l'utilisateur tripote l'url.
+    // le code n'est pas très solide****** on renverrait -1 dans ce cas ?
 
-//BUG007: valret est la valeur de retour... Grosse erreur de codage ici.
-//On veut vérifier si la case à cocher présentDansListe est false (0) ou true (1)
-//cette valeur est censée être en entrée de la méthode dans un paramètre Val.
-//Le code if (valret == 1) este modifié pour if (val == 1)
-if (val == 1)
-{
-    // s'il existe un enregistrement dans FilmsUtilisateur qui contient à la fois l'identifiant de l'utilisateur
-    // et celui du film, alors le film existe dans la liste de films et peut
-    // être supprimé
-    var film = _context.FilmsUtilisateur.FirstOrDefault(x =>
-            x.IdFilm == id && x.IdUtilisateur == idUtilisateur);
-    if (film != null)
+    //BUG007: valret est la valeur de retour... Grosse erreur de codage ici.
+    //On veut vérifier si la case à cocher présentDansListe est false (0) ou true (1)
+    //cette valeur est censée être en entrée de la méthode dans un paramètre Val.
+    //Le code if (valret == 1) este modifié pour if (val == 1)
+    if (val == 1)
     {
-        _context.FilmsUtilisateur.Remove(film);
-        valret = 0; //non coché
-    }
+        // s'il existe un enregistrement dans FilmsUtilisateur qui contient à la fois l'identifiant de l'utilisateur
+        // et celui du film, alors le film existe dans la liste de films et peut
+        // être retiré de la liste de l'utilisateur.
+        var film = _context.FilmsUtilisateur.FirstOrDefault(x =>
+                x.IdFilm == id && x.IdUtilisateur == idUtilisateur);
+        if (film != null)
+        {
+            _context.FilmsUtilisateur.Remove(film);
+            valret = 0; //= non coché
+        }
 
-}
-else
-{
-    // le film n'est pas dans la liste de films, nous devons donc
-    // créer un nouvel objet FilmUtilisateur et l'ajouter à la base de données.
-    _context.FilmsUtilisateur.Add(
-       new FilmUtilisateur
-       {
-           IdUtilisateur = idUtilisateur,
-           IdFilm = id,
-           Vu = false,
-           Note = 0
-       }
-    );
-    valret = 1; //coché
-}
-// nous pouvons maintenant enregistrer les changements dans la base de données
-await _context.SaveChangesAsync();
-// et renvoyer notre valeur de retour (-1, 0 ou 1) au script qui a appelé
-// cette méthode depuis la page Index
-return Json(valret);
+    }
+    else
+    {
+                // le film n'est pas dans la liste de films, nous devons donc
+                // créer un nouvel objet FilmUtilisateur et l'ajouter à la base de données.
+                
+                //BUG010: le film n'est pas ajouté à la liste des films de l'utilisateur
+                /* old code (BUG010)
+                 * 
+                _context.FilmsUtilisateur.Add(
+                new FilmUtilisateur
+                {
+                    IdUtilisateur = idUtilisateur,
+                    IdFilm = id,
+                    Vu = false,
+                    Note = 0               
+                });
+                */
+
+                //UPD014(BUG010): on renseigne les clés étrangères Utilisateur et Film.
+                FilmUtilisateur filmUtil = new FilmUtilisateur()
+                {
+                    IdUtilisateur = idUtilisateur,
+                    IdFilm = id,
+                    Vu = false,
+                    Note = 0
+                };
+                //renseigne le film sélectionné
+                Film selectFilm = _context.Films.FirstOrDefault(s => s.Id == id);                
+                filmUtil.Film = selectFilm;                
+                //renseigne l'utilisateur
+                filmUtil.User = await RecupererUtilisateurCourant();
+                //ajoute le film à la liste des favoris de l'utilisateur.
+                _context.FilmsUtilisateur.Add(filmUtil);                
+                _context.SaveChanges();
+
+                valret = 1; // = coché
+    }
+    // nous pouvons maintenant enregistrer les changements dans la base de données
+    await _context.SaveChangesAsync();
+    // et renvoyer notre valeur de retour (-1, 0 ou 1) au script qui a appelé
+    // cette méthode depuis la page Index
+    return Json(valret);
 }
 
 // GET: Films/Details/5
