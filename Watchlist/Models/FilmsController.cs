@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Watchlist.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Watchlist.Models
 {
@@ -98,6 +100,9 @@ namespace Watchlist.Models
 //UPD012: méthode ajouterSupprimer un film de sa liste
 //BUG006: le code de OCR est incorrect, avec des oublis et une logique de code incohérente.
 //ajout des paramètres en entrée id (film) et val (sélectionné dans sa liste 0(non) et 1(oui).
+//NOTE003 : async methode comme elle contient des instructions async.
+//permet d'éviter que le dbContext change avant le traitement
+//des instructions async comme SaveChangesAsync.
 [HttpGet]
 public async Task<JsonResult> AjouterSupprimer(int id, int val)
 {
@@ -110,7 +115,7 @@ public async Task<JsonResult> AjouterSupprimer(int id, int val)
 
     //***** il apparait possible que id et val soient null.
     //Si par exemple l'utilisateur tripote l'url.
-    // le code n'est pas très solide****** on renverrait -1 dans ce cas ?
+    // le code n'est pas très solide****** on renverrait -1 dans ce cas ?    
 
     //BUG007: valret est la valeur de retour... Grosse erreur de codage ici.
     //On veut vérifier si la case à cocher présentDansListe est false (0) ou true (1)
@@ -132,47 +137,79 @@ public async Task<JsonResult> AjouterSupprimer(int id, int val)
     }
     else
     {
-                // le film n'est pas dans la liste de films, nous devons donc
-                // créer un nouvel objet FilmUtilisateur et l'ajouter à la base de données.
+        // le film n'est pas dans la liste de films, nous devons donc
+        // créer un nouvel objet FilmUtilisateur et l'ajouter à la base de données.
                 
-                //BUG010: le film n'est pas ajouté à la liste des films de l'utilisateur
-                /* old code (BUG010)
-                 * 
-                _context.FilmsUtilisateur.Add(
-                new FilmUtilisateur
-                {
-                    IdUtilisateur = idUtilisateur,
-                    IdFilm = id,
-                    Vu = false,
-                    Note = 0               
-                });
-                */
+        //BUG010: le film n'est pas ajouté à la liste des films de l'utilisateur
+        /* old code (BUG010)
+            * 
+        _context.FilmsUtilisateur.Add(
+        new FilmUtilisateur
+        {
+            IdUtilisateur = idUtilisateur,
+            IdFilm = id,
+            Vu = false,
+            Note = 0               
+        });
+        */
 
-                //UPD014(BUG010): on renseigne les clés étrangères Utilisateur et Film.
-                FilmUtilisateur filmUtil = new FilmUtilisateur()
-                {
-                    IdUtilisateur = idUtilisateur,
-                    IdFilm = id,
-                    Vu = false,
-                    Note = 0
-                };
-                //renseigne le film sélectionné
-                Film selectFilm = _context.Films.FirstOrDefault(s => s.Id == id);                
-                filmUtil.Film = selectFilm;                
-                //renseigne l'utilisateur
-                filmUtil.User = await RecupererUtilisateurCourant();
+        //UPD014(BUG010): on renseigne les clés étrangères Utilisateur et Film.
+        FilmUtilisateur filmUtil = new FilmUtilisateur()
+        {
+            IdUtilisateur = idUtilisateur,
+            IdFilm = id,
+            Vu = false,
+            Note = 0
+        };
+        //renseigne le film sélectionné
+        Film selectFilm = _context.Films.FirstOrDefault(s => s.Id == id);                
+        filmUtil.Film = selectFilm;                
+        //renseigne l'utilisateur
+        filmUtil.User = await RecupererUtilisateurCourant();
                 //ajoute le film à la liste des favoris de l'utilisateur.
-                _context.FilmsUtilisateur.Add(filmUtil);                
-                _context.SaveChanges();
+                //_context.FilmsUtilisateur.Add(filmUtil);        
+        _context.Add(filmUtil);
+        //BUG010 fix3.1 : on vérifie le ContextId entre un emplacement où la sauvegarde ne fonctionne pas et un autre
+        // vérifier le _context.ContextId; entre les emplacements ou à la sauvergarde fonctionne et là ou elle ne fonctionne pas.
 
-                valret = 1; // = coché
+        //BUG010 fix5: On force l'EntityState en modifié.
+        _context.Entry(filmUtil).State = EntityState.Added;
+
+        //BUG010 fix1: vérifier la chaine de connexion si ok avant sauvegarde.
+        string connection = _context.Database.GetConnectionString();
+        //BUG010 fix2: vérifier mapping, schéma et table.
+        var mapping = _context.Model.FindEntityType(typeof(FilmUtilisateur));
+        string schema = mapping.GetSchema();
+        string table = mapping.GetTableName();
+
+        //BUG010 fix4: on vérifie qu'il y a bien des changes identifiés et on vérifie le nombre de change effectué.
+        _context.ChangeTracker.AutoDetectChangesEnabled = true;
+        _context.ChangeTracker.DetectChanges();
+        bool hasChanges = _context.ChangeTracker.HasChanges(); // should be 
+        //await _context.SaveChangesAsync();                
+
+        //BUG010 fix6: forcer une transaction pour pouvoir la commiter.
+        var transaction = _context.Database.BeginTransaction();
+        _context.Add(filmUtil);
+        var hasTransaction = _context.Database.CurrentTransaction != null;
+        transaction.Commit();
+        //var updates = _context.SaveChanges();
+         
+        _context.FilmsUtilisateur.Add(filmUtil);
+        valret = 1; // = coché
+
+        await _context.SaveChangesAsync();
+        return Json(valret);                
     }
+
+
     // nous pouvons maintenant enregistrer les changements dans la base de données
     await _context.SaveChangesAsync();
-    // et renvoyer notre valeur de retour (-1, 0 ou 1) au script qui a appelé
+
+    // Renvoi si film supprimé ou ajouté à la liste (-1 (non trouvé), 0 ou 1) au script qui a appelé
     // cette méthode depuis la page Index
-    return Json(valret);
-}
+    return Json(valret);    
+ }
 
 // GET: Films/Details/5
 public async Task<IActionResult> Details(int? id)
@@ -211,6 +248,9 @@ if (ModelState.IsValid)
 {
     //Met à jour le DbContexte de l'app
     _context.Add(film);
+    //BUG010 fix3.2 : on vérifie le ContextId entre un emplacement où la sauvegarde ne fonctionne pas et un autre
+    // vérifier le _context.ContextId; entre les emplacements ou à la sauvergarde fonctionne et là ou elle ne fonctionne pas.                
+
     //Sauvegarde en BDD en asynchrone
     await _context.SaveChangesAsync();
     //Renvoi à l'index des films après création

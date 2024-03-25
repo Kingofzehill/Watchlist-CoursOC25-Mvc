@@ -1,6 +1,8 @@
 ﻿using Humanizer;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.Metrics;
+using System.Xml.Linq;
 
 namespace Watchlist.Data
 {
@@ -18,9 +20,12 @@ namespace Watchlist.Data
         // avec les classes Film et Utilisateur (clés étrangères).
         //UPD13(BUG010) : on spécifie explicitement les clés étrangères
         //car elles sont part intégrante de la clé primaire composite
-        [ForeignKey("IdUtilisateur")]
-        public virtual Utilisateur User { get; set; }
+        //BUG011 : fix for update-database error : 
+        //      ALTER TABLE ALTER COLUMN Name failed because one or more objects access this column.
+        //==> we try to drop-database from package manager console (powershell).
         [ForeignKey("IdFilm")]
         public virtual Film Film { get; set; }
+        [ForeignKey("IdUtilisateur")]
+        public virtual Utilisateur User { get; set; }
     }
 }
