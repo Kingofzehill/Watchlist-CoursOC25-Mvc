@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Watchlist.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Watchlist.Data;
+using Watchlist.Models;
 
 namespace Watchlist.Models
 {
@@ -166,9 +168,11 @@ public async Task<JsonResult> AjouterSupprimer(int id, int val)
         filmUtil.Film = selectFilm;                
         //renseigne l'utilisateur
         filmUtil.User = await RecupererUtilisateurCourant();
-                //ajoute le film à la liste des favoris de l'utilisateur.
-                //_context.FilmsUtilisateur.Add(filmUtil);        
-        _context.Add(filmUtil);
+        //ajoute le film à la liste des favoris de l'utilisateur.
+        //_context.Add(filmUtil);
+        _context.FilmsUtilisateur.Add(filmUtil);
+
+        /* test for BUG010 FIX
         //BUG010 fix3.1 : on vérifie le ContextId entre un emplacement où la sauvegarde ne fonctionne pas et un autre
         // vérifier le _context.ContextId; entre les emplacements ou à la sauvergarde fonctionne et là ou elle ne fonctionne pas.
 
@@ -194,12 +198,10 @@ public async Task<JsonResult> AjouterSupprimer(int id, int val)
         var hasTransaction = _context.Database.CurrentTransaction != null;
         transaction.Commit();
         //var updates = _context.SaveChanges();
-         
-        _context.FilmsUtilisateur.Add(filmUtil);
+        END test for BUG010 FIX*/ 
+        
         valret = 1; // = coché
-
-        await _context.SaveChangesAsync();
-        return Json(valret);                
+        //await _context.SaveChangesAsync();              
     }
 
 

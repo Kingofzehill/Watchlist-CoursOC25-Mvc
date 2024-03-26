@@ -66,6 +66,34 @@
 @*UPD009: javascript, utiliser la valeur des boutons pour interagir avec l'utilsateur*@
 @section Scripts {
     <script>
+        async function jget(url) {
+            // Note: Below variable will hold the value of the resolved promise
+            let response = await fetchingData(url);
+            return response;
+        }
+
+        function fetchingData(url) {
+            return new Promise((resolve, reject) => {
+                $.get(url,
+                    function (data) {
+                        if (data == 0) {
+                             @*Si presentDansListe = 0 (non ajouté) affiche le +
+                            //BUG005: le code est faux, l'attribut est data-val et non presentDansListe-Val...
+                            //btn.attr('presentDansListe-val', 'False');*@
+                            btn.attr('data-val', 'False');
+                            btn.html(' + ');
+                        }
+                        else if (data == 1) {
+                             @*Si presentDansListe = 1 ajouté) affiche le -
+                            //BUG005: ce code est faux, l'attribut est data-val et non presentDansListe-Val...
+                            //btn.attr('presentDansListe-val', 'True');*@
+                            btn.attr('data-val', 'True');
+                            btn.html(' - ');
+                        }
+                    });
+            });
+        }
+
         jQuery(document).ready(function () {
             $('.btn').click(function (e) {
                 var btn = $(this);
@@ -79,23 +107,50 @@
                 La functgion data récupère la valeur de retour de AjouterSupprimer
                 et coche/décoche présent dans la liste en fonction
                 *@
-                $.get('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm,
+
+                @* use AWAIT for waiting async AjouterSupprimer function call back
+                        https://stackoverflow.com/questions/63384265/how-to-use-await-with-get
+
+                async function jget(url) {
+                    // Note: Below variable will hold the value of the resolved promise
+                    let response = await fetchingData(url);
+                    return response;
+                }
+
+                function fetchingData(url) {
+                    return new Promise((resolve, reject) => {
+                         $.get(url, html => {
+                            resolve(html)
+                         })
+                    });
+                }
+                *@
+
+                //BUG010 fix7: test async call to AjouterSupprimer with await response.
+                jget('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm);
+
+                @* OLD Code before await test for AjouterSupprimer call *@
+                @*$.get('/Films/AjouterSupprimer?id=' + idFilm + '&val=' + valFilm,
                     function (data) {
-                        if (data == 0) {
+                        if (data == 0) {*@
+
                             @*Si presentDansListe = 0 (non ajouté) affiche le +
                             //BUG005: le code est faux, l'attribut est data-val et non presentDansListe-Val...
                             //btn.attr('presentDansListe-val', 'False');*@
-                            btn.attr('data-val', 'False');
+
+                            @*btn.attr('data-val', 'False');
                             btn.html(' + ');
                         }
-                        else if (data == 1) {
+                        else if (data == 1) {*@
+
                             @*Si presentDansListe = 1 ajouté) affiche le -
                             //BUG005: ce code est faux, l'attribut est data-val et non presentDansListe-Val...
                             //btn.attr('presentDansListe-val', 'True');*@
-                            btn.attr('data-val', 'True');
+
+                            @*btn.attr('data-val', 'True');
                             btn.html(' - ');
                         }
-                    });
+                    });*@
             });
 
         });
