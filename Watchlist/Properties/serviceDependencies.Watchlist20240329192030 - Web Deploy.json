@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "mssql2": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('resourceGroupName')]/providers/Microsoft.Web/sites/Watchlist20240329192030/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsAzureConnection_D361C14572",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/myfreesqldbserver78/databases/Watchlist_export-couche-données_20240325",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:AzureConnection",
+      "dynamicId": null
+    }
+  }
+}
